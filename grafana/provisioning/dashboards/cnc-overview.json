@@ -1,0 +1,350 @@
+{
+  "uid": "cnc-overview",
+  "title": "CNC Machine Overview",
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "MACHINE STATUS",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "true": { "text": "RUNNING", "color": "green", "index": 0 } } },
+            { "type": "value", "options": { "false": { "text": "NOT RUNNING", "color": "orange", "index": 1 } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] },
+          "color": { "mode": "fixed" },
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^running$/", "values": false },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "text": { "titleSize": 24, "valueSize": 72 }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT time, running::text FROM machine_status ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Spindle Speed (RPM)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm",
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT time, spindle_speed FROM machine_status WHERE $__timeFilter(time) ORDER BY time",
+          "format": "time_series",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Feed Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "mm/min",
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT time, feed_rate FROM machine_status WHERE $__timeFilter(time) ORDER BY time",
+          "format": "time_series",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Running Program",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 14 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^program_number$/", "values": false },
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT time, program_number FROM machine_light ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Program Name",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 14 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^program_name$/", "values": false },
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT time, program_name FROM machine_light ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Tool Number",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 14 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^tool_number$/", "values": false },
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT time, tool_number FROM machine_light ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Executing Line",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 14 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^executing_line$/", "values": false },
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT time, executing_line FROM machine_light ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Axis Positions (Absolute)",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 18 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, axes_absolute FROM machine_light ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Axis Positions (Relative)",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 18 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, axes_relative FROM machine_light ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Axis Positions (Machine)",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 18 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, axes_machine FROM machine_light ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Active Alarms",
+      "type": "table",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 26 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, alarm_code, alarm_text FROM alarm_events WHERE $__timeFilter(time) ORDER BY time DESC LIMIT 20",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Machine Uptime (Running %)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 32 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 50 },
+              { "color": "green", "value": 80 }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT 100.0 * COUNT(*) FILTER (WHERE running = true) / NULLIF(COUNT(*), 0) AS \"uptime\" FROM machine_status WHERE $__timeFilter(time)",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Macros (Latest)",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 32 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, macros FROM machine_heavy ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Diagnostics (Latest)",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 32 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, diagnostics FROM machine_heavy ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Controller Date/Time",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 40 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }] },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^controller_datetime$/", "values": false },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT time, controller_datetime FROM machine_light ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "System Info (Latest)",
+      "type": "table",
+      "gridPos": { "h": 4, "w": 16, "x": 8, "y": 40 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, system_info FROM machine_heavy ORDER BY time DESC LIMIT 1",
+          "format": "table",
+          "datasource": { "type": "postgres", "uid": "timescaledb" }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39
+}

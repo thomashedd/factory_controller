@@ -1,0 +1,48 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: factory_timescaledb
+    environment:
+      POSTGRES_USER: factory
+      POSTGRES_PASSWORD: factory
+      POSTGRES_DB: factory
+    ports:
+      - "5433:5432"
+    volumes:
+      - tsdb_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U factory"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: factory_grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+  collector:
+    build: .
+    container_name: factory_collector
+    environment:
+      CNC_HOST: "${CNC_HOST:-192.168.1.100}"
+      CNC_PORT: "${CNC_PORT:-8193}"
+      SLACK_WEBHOOK: "${SLACK_WEBHOOK:-}"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+volumes:
+  tsdb_data:
+  grafana_data:
