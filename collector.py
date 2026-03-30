@@ -18,6 +18,7 @@ STATUS_INTERVAL = 1.0  # seconds between machine status reads
 LIGHT_POLL_INTERVAL = 10.0  # seconds between lightweight data reads
 HEAVY_POLL_INTERVAL = 300.0  # seconds (5 min) between heavy data reads
 HEARTBEAT_INTERVAL = 60.0  # seconds between heartbeat checks
+STATE_DEBOUNCE_COUNT = 30  # consecutive reads before confirming state change
 
 SLACK_WEBHOOK = os.environ.get("SLACK_WEBHOOK", "")
 
@@ -330,7 +331,9 @@ def run(host):
     try:
         last_light_poll = 0.0
         last_heavy_poll = 0.0
-        last_running = initial["running"]
+        confirmed_running = initial["running"]
+        pending_state = initial["running"]
+        pending_count = 0
         while True:
             now = time.time()
 
@@ -345,6 +348,7 @@ def run(host):
                 print(f"[heavy] collected @ {time.strftime('%H:%M:%S')}")
 
             # Lightweight data collection every 10s
+            # (light poll already includes spindle_speed and feed_rate)
             if now - last_light_poll >= LIGHT_POLL_INTERVAL:
                 snapshot = collect_light(cnc)
                 last_light_poll = now
@@ -353,6 +357,11 @@ def run(host):
                 except Exception as e:
                     print(f"[db] light write error: {e}", file=sys.stderr)
                 print(f"[light] collected @ {time.strftime('%H:%M:%S')}")
+                # Derive running flag from light poll data
+                running = bool(
+                    (snapshot.get("spindle_speed") and snapshot["spindle_speed"] != 0)
+                    or (snapshot.get("feed_rate") and snapshot["feed_rate"] != 0)
+                )
             else:
                 # Status-only every 1s
                 status = collect_status(cnc)
@@ -360,15 +369,24 @@ def run(host):
                     write_status(db, status)
                 except Exception as e:
                     print(f"[db] status write error: {e}", file=sys.stderr)
-
-                # Notify Slack on state change
                 running = status["running"]
-                if last_running is not None and running != last_running:
+
+            # Debounced state change detection
+            if running != confirmed_running:
+                if running == pending_state:
+                    pending_count += 1
+                else:
+                    pending_state = running
+                    pending_count = 1
+                if pending_count >= STATE_DEBOUNCE_COUNT:
+                    confirmed_running = running
+                    pending_count = 0
                     if running:
                         notify_slack("CNC Machine is now *RUNNING*")
                     else:
                         notify_slack("CNC Machine has *STOPPED*")
-                last_running = running
+            else:
+                pending_count = 0
 
             time.sleep(STATUS_INTERVAL)
     except KeyboardInterrupt:
