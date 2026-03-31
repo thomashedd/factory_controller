@@ -18,7 +18,7 @@ STATUS_INTERVAL = 1.0  # seconds between machine status reads
 LIGHT_POLL_INTERVAL = 10.0  # seconds between lightweight data reads
 HEAVY_POLL_INTERVAL = 300.0  # seconds (5 min) between heavy data reads
 HEARTBEAT_INTERVAL = 60.0  # seconds between heartbeat checks
-STATE_DEBOUNCE_COUNT = 30  # consecutive reads before confirming state change
+STATE_DEBOUNCE_COUNT = 60  # consecutive reads before confirming state change
 
 SLACK_WEBHOOK = os.environ.get("SLACK_WEBHOOK", "")
 
